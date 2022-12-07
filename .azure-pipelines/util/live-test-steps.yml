@@ -1,0 +1,89 @@
+parameters:
+- name: name
+- name: vmImage
+- name: psVersion
+- name: dotnetVersion
+
+jobs:
+- job: ${{ parameters.name }}
+  timeoutInMinutes: 180
+  pool:
+    vmImage: ${{ parameters.vmImage }}
+
+  steps:
+  - task: UseDotNet@2
+    condition: ne('${{ parameters.dotnetVersion }}', '')
+    displayName: 'Install desired .NET version ${{ parameters.dotnetVersion }}'
+    inputs:
+      packageType: sdk
+      version: ${{ parameters.dotnetVersion }}
+    
+  - task: PowerShell@2
+    displayName: Install desired Powershell version ${{ parameters.psVersion }}
+    inputs:
+      pwsh: true
+      targetType: filePath
+      filePath: InitLiveTestCIEnv.ps1
+      arguments: -DesiredVersion ${{ parameters.psVersion }}
+
+  - task: DownloadPipelineArtifact@2
+    condition: and(succeeded(), eq(variables['GalleryName'], 'LocalRepo'), eq(variables['PipelineId'], ''))
+    displayName: Download latest artifacts from build pipeline
+    inputs:
+      buildType: specific
+      project: $(ProjectToDownloadArtifacts)
+      definition: $(BuildPipelineName)
+      buildVersionToDownload: 'latest'
+      artifactName: $(ArtifactName)
+      targetPath: $(Pipeline.Workspace)
+
+  - task: DownloadPipelineArtifact@2
+    condition: and(succeeded(), eq(variables['GalleryName'], 'LocalRepo'), ne(variables['PipelineId'], ''))
+    displayName: Download specified artifacts from build pipeline
+    inputs:
+      buildType: 'specific'
+      project: $(ProjectToDownloadArtifacts)
+      definition: $(BuildPipelineName)
+      buildVersionToDownload: 'specific'
+      pipelineId: $(PipelineId)
+      artifactName: '$(ArtifactName)'
+      targetPath: '$(Pipeline.Workspace)'
+
+  - task: PowerShell@2
+    condition: and(succeeded(), eq(variables['GalleryName'], 'LocalRepo'))
+    displayName: Copy artifacts to local repository
+    inputs:
+      targetType: 'inline'
+      script: |
+       New-Item -Path "$(Pipeline.Workspace)" -Name LocalRepo -ItemType Directory
+       Copy-Item -Path "$(Pipeline.Workspace)\*.nupkg" -Destination "$(Pipeline.Workspace)\LocalRepo\"
+       Get-ChildItem "$(Pipeline.Workspace)\LocalRepo\"
+
+  - task: PowerShell@2
+    displayName: Install desired Az modules from $(GalleryName)
+    inputs:
+      pwsh: true
+      targetType: filePath
+      filePath: "./tools/TestFx/Live/InvokeLiveTestCITask.ps1"
+      arguments: -UseWindowsPowerShell ("${{ parameters.psVersion }}" -eq "5.1") -ScriptFile "./tools/TestFx/Live/InstallLiveTestAzModule.ps1 -Source $(GalleryName) -RepoLocation $(RepoLocation)"
+      
+  - task: PowerShell@2
+    displayName: Connect AzAccount
+    inputs:
+      filePath: "./tools/TestFx/Live/InvokeLiveTestCITask.ps1"
+      arguments: -UseWindowsPowerShell ("${{ parameters.psVersion }}" -eq "5.1") -ScriptFile "./tools/TestFx/Live/ConnectLiveTestServicePincipal.ps1 $(LiveTestServicePrincipalSubscriptionId) $(LiveTestServicePrincipalTenantId) $(LiveTestServicePrincipalId) $(LiveTestServicePrincipalSecret)"
+
+  - task: PowerShell@2
+    displayName: Run live test 
+    inputs:
+      filePath: "./tools/TestFx/Live/InvokeLiveTestCITask.ps1"
+      arguments: -UseWindowsPowerShell ("${{ parameters.psVersion }}" -eq "5.1") -Script "Get-ChildItem -Path livetests -Directory -Recurse | ForEach-Object { Get-ChildItem -Path $_\testlivescenarios.ps1 -File } | ForEach-Object { . $_ }"
+      failOnStderr: true
+
+  - task: PowerShell@2
+    displayName: Save live test results to Kusto
+    inputs:
+      pwsh: true
+      targetType: filePath
+      filePath: "./tools/TestFx/Live/InvokeLiveTestCITask.ps1"
+      arguments: -UseWindowsPowerShell ("${{ parameters.psVersion }}" -eq "5.1") -ScriptPath "./tools/TestFx/Live/SaveLiveTestResultsToKusto.ps1 $(KustoClusterName) $(KustoClusterRegion) $(KustoDatabaseName) $(KustoTableName) $(KustoServicePrincipalId) $(KustoServicePrincipalSecret) $(KustoServicePrincipalTenantId)"

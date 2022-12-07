@@ -33,6 +33,9 @@ function Initialize-KustoPackage {
     $kustoPackages = @(
         @{ PackageName = "azure.core"; PackageVersion = "1.22.0"; DllName = "Azure.Core.dll" },
         @{ PackageName = "azure.data.tables"; PackageVersion = "12.5.0"; DllName = "Azure.Data.Tables.dll" },
+        @{ PackageName = "azure.storage.blobs"; PackageVersion = "12.10.0"; DllName = "Azure.Storage.Blobs.dll" },
+        @{ PackageName = "azure.storage.common"; PackageVersion = "12.9.0"; DllName = "Azure.Storage.Common.dll" },
+        @{ PackageName = "azure.storage.queues"; PackageVersion = "12.8.0"; DllName = "Azure.Storage.Queues.dll" },
         @{ PackageName = "microsoft.azure.kusto.cloud.platform"; PackageVersion = "11.1.0"; DllName = "Kusto.Cloud.Platform.dll" },
         @{ PackageName = "microsoft.azure.kusto.cloud.platform.aad"; PackageVersion = "11.1.0"; DllName = "Kusto.Cloud.Platform.Aad.dll" },
         @{ PackageName = "microsoft.azure.kusto.data"; PackageVersion = "11.1.0"; DllName = "Kusto.Data.dll" },
@@ -40,9 +43,6 @@ function Initialize-KustoPackage {
         @{ PackageName = "microsoft.identity.client"; PackageVersion = "4.46.0"; DllName = "Microsoft.Identity.Client.dll" },
         @{ PackageName = "microsoft.identitymodel.abstractions"; PackageVersion = "6.18.0"; DllName = "Microsoft.IdentityModel.Abstractions.dll" },
         @{ PackageName = "microsoft.io.recyclablememorystream"; PackageVersion = "2.2.0"; DllName = "Microsoft.IO.RecyclableMemoryStream.dll" },
-        @{ PackageName = "azure.storage.blobs"; PackageVersion = "12.10.0"; DllName = "Azure.Storage.Blobs.dll" },
-        @{ PackageName = "azure.storage.common"; PackageVersion = "12.9.0"; DllName = "Azure.Storage.Common.dll" },
-        @{ PackageName = "azure.storage.queues"; PackageVersion = "12.8.0"; DllName = "Azure.Storage.Queues.dll" },
         @{ PackageName = "system.memory.data"; PackageVersion = "1.0.2"; DllName = "System.Memory.Data.dll" }
     )
 

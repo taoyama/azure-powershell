@@ -60,55 +60,6 @@ process {
 
     Import-Module ($PSScriptRoot | Split-Path | Join-Path -ChildPath "Assert.ps1") -Force
 
-    function Install-LiveTestAzModules {
-        [CmdletBinding()]
-        [OutputType([void])]
-        param (
-            [Parameter(Mandatory, Position = 0)]
-            [ValidateSet("PSGallery", "Local", "Dev", IgnoreCase = $false, ErrorMessage = "Invalid value for parameter Source.")]
-            [string] $Source
-        )
-
-        dynamicparam {
-            switch ($Source) {
-                "Local" {
-                    $localParams = [RuntimeDefinedParameterDictionary]::new()
-                    $locationParam = [RuntimeDefinedParameter]::new(
-                        "RepoLocation",
-                        [string],
-                        [Attribute[]]@(
-                            [Parameter]@{ Mandatory = $true; Position = 1 }
-                            [ValidateNotNullOrEmpty]::new()
-                            [ValidateScript]::new({ Test-Path -LiteralPath $_ -PathType Container })
-                        )
-                    )
-                    $localParams.Add($locationParam.Name, $locationParam)
-                    $localParams
-                }
-            }
-        }
-
-        process {
-            switch ($Source) {
-                "PSGallery" {
-                    Install-Module -Name Az -Repository PSGallery -Scope CurrentUser -InstallationPolicy Trusted -AllowClobber -Force
-                }
-                "Local" {
-                    Register-PSRepository -Name LocalGallery -SourceLocation $RepoLocation -PackageManagementProvider NuGet -InstallationPolicy Trusted
-                    Install-Module -Name Az -Repository LocalGallery -Scope CurrentUser -AllowClobber -Force
-                }
-                "Dev" {
-                    Write-Host "$script:ArtifactsDirectory\Debug\Az.Accounts\Az.Accounts.psd1"
-                    Import-Module "$script:ArtifactsDirectory\Debug\Az.Accounts\Az.Accounts.psd1"
-                    Get-ChildItem -LiteralPath "$script:ArtifactsDirectory\Debug" -Directory -Filter Az.* -Exclude Az.Accounts | Get-ChildItem -File -Filter Az.*.psd1 | ForEach-Object {
-                        Write-Host $_.FullName
-                        Import-Module $_.FullName
-                    }
-                }
-            }
-        }
-    }
-
     function Initialize-LiveTestModule {
         [CmdletBinding()]
         [OutputType([void])]
@@ -125,32 +76,6 @@ process {
         }
 
         ({} | Select-Object "Name", "Description", "StartDateTime", "EndDateTime", "IsSuccess", "Error" | ConvertTo-Csv -NoTypeInformation)[0] | Out-File -LiteralPath $script:LiveTestRawCsvFile -Force
-    }
-
-    function Connect-LiveTestServicePrincipal {
-        [CmdletBinding()]
-        [OutputType([void])]
-        param (
-            [Parameter(Mandatory)]
-            [ValidateNotNullOrEmpty()]
-            [guid] $SubscriptionId,
-
-            [Parameter(Mandatory)]
-            [ValidateNotNullOrEmpty()]
-            [guid] $TenantId,
-
-            [Parameter(Mandatory)]
-            [ValidateNotNullOrEmpty()]
-            [guid] $ServicePrincipalId,
-
-            [Parameter(Mandatory)]
-            [ValidateNotNullOrEmpty()]
-            [string] $ServicePrincipalSecret
-        )
-
-        $servicePrincipalSecureSecret = ConvertTo-SecureString -String $ServicePrincipalSecret -AsPlainText -Force
-        $servicePrincipalCredential = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList $ServicePrincipalId, $servicePrincipalSecureSecret
-        Connect-AzAccount -SubscriptionId $SubscriptionId -TenantId $TenantId -Credential $servicePrincipalCredential -ServicePrincipal
     }
 
     function New-LiveTestRandomName {
@@ -341,7 +266,6 @@ process {
             Clear-LiveTestResources -Name $scnResourceGroupName
             $scnCsvData.EndDateTime = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss")
             Export-Csv -LiteralPath $script:LiveTestRawCsvFile -InputObject $scnCsvData -NoTypeInformation -Append
-            #Write-Host "Total executd live tests: $script:ScenarioTotalCount"
         }
     }
 
@@ -367,6 +291,4 @@ process {
     }
 
     Initialize-LiveTestModule -Name $Name
-
-    Connect-LiveTestServicePrincipal -SubscriptionId "XXX" -TenantId "XXX" -ServicePrincipalId "XXX" -ServicePrincipalSecret "XXX"
 }
