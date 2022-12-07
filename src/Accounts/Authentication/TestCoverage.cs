@@ -16,6 +16,7 @@ using Microsoft.WindowsAzure.Commands.Common;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -28,7 +29,7 @@ namespace Microsoft.Azure.Commands.Common.Authentication
         private const string CsvHeaderParameterSetName = "ParameterSetName";
         private const string CsvHeaderParameters = "Parameters";
         private const string CsvHeaderSourceScript = "SourceScript";
-        private const string CsvHeaderLineNumber = "LineNumber";
+        private const string CsvHeaderScriptLineNumber = "LineNumber";
         private const string CsvHeaderIsSuccess = "IsSuccess";
         private const string Delimiter = ",";
 
@@ -47,6 +48,7 @@ namespace Microsoft.Azure.Commands.Common.Authentication
 
         static TestCoverage()
         {
+
             var repoRootPath = ProbeRepoDirectory();
             if (!string.IsNullOrEmpty(repoRootPath))
             {
@@ -78,7 +80,7 @@ namespace Microsoft.Azure.Commands.Common.Authentication
                          .Append(CsvHeaderParameterSetName).Append(Delimiter)
                          .Append(CsvHeaderParameters).Append(Delimiter)
                          .Append(CsvHeaderSourceScript).Append(Delimiter)
-                         .Append(CsvHeaderLineNumber).Append(Delimiter)
+                         .Append(CsvHeaderScriptLineNumber).Append(Delimiter)
                          .Append(CsvHeaderIsSuccess);
 
             return headerBuilder.ToString();
