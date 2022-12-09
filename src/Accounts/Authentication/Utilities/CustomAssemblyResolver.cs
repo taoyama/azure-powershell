@@ -26,11 +26,13 @@ namespace Microsoft.Azure.Commands.Profile.Utilities
             {
                 {"Azure.Core", new Version("1.25.0.0")},
                 {"Azure.Identity", new Version("1.6.1.0")},
+                {"Azure.Identity.BrokeredAuthentication", new Version("1.0.0.0") },
                 {"Microsoft.Bcl.AsyncInterfaces", new Version("1.1.1.0")},
-                {"Microsoft.Identity.Client", new Version("4.46.2.0") },
+                {"Microsoft.Identity.Client", new Version("4.47.0.0") },
+                {"Microsoft.Identity.Client.Broker", new Version("4.47.0.0") },
                 {"Microsoft.Identity.Client.Extensions.Msal", new Version("2.23.0.0") },
-                {"Microsoft.IdentityModel.Abstractions", new Version("6.22.1.0") },
-
+                {"Microsoft.Identity.Client.NativeInterop", new Version("0.12.4.0")},
+                {"Microsoft.IdentityModel.Abstractions", new Version("6.22.1.0")},
                 {"Newtonsoft.Json", new Version("10.0.0.0")},
                 {"System.Buffers", new Version("4.0.3.0")},
                 {"System.Diagnostics.DiagnosticSource", new Version("4.0.4.0")},

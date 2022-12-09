@@ -19,6 +19,7 @@
 -->
 
 ## Upcoming Release
+* Supported Web Account Manager (WAM) as an opt-in interactive login experience. Enable it by `Update-AzConfig -EnableLoginByWam $true`.
 * Enabled AzKeyStore with keyring in Linux.
 
 ## Version 2.10.4
