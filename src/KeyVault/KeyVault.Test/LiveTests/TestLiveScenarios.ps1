@@ -1,11 +1,10 @@
-Write-Host "test live scenarios"
+Write-Host "Test KeyVault live scenarios"
 
 Invoke-LiveTestScenario -Name "KeyVault.Create KeyVault Test" -Description "Test create KeyVault" -ScenarioScript `
 {
-    param ($rgName, $rgLocation)
+    param ($rg)
 
-    Write-Host "Resource group name: $rgName"
-
+    $rgName = $rg.ResourceGroupName
     $vaultLocation = "westus"
     $vaultName = New-LiveTestResourceName
 
@@ -30,10 +29,9 @@ Invoke-LiveTestScenario -Name "KeyVault.Create KeyVault Test" -Description "Test
 
 Invoke-LiveTestScenario -Name "KeyVault.Delete KeyVault Test" -Description "Test delete KeyVault" -ResourceGroupLocation "eastus" -ScenarioScript `
 {
-    param ([string] $rgName, [string] $rgLocation)
+    param ($rg)
 
-    Write-Host "Resource group name: $rgName"
-
+    $rgName = $rg.ResourceGroupName
     $vaultLocation = "westus"
     $vaultName = New-LiveTestResourceName
 

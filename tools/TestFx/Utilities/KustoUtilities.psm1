@@ -16,38 +16,41 @@ New-Variable -Name ArtifactsDirectory -Value (Join-Path -Path $script:RepoRootDi
 New-Variable -Name LiveTestRootDirectory -Value (Join-Path -Path $script:ArtifactsDirectory -ChildPath "LiveTestAnalysis") -Scope Script -Option Constant
 New-Variable -Name LiveTestRawDirectory -Value (Join-Path -Path $script:LiveTestRootDirectory -ChildPath "Raw") -Scope Script -Option Constant
 
-function Initialize-KustoPackage {
+function InitializeKustoPackage {
     [CmdletBinding()]
     [OutputType([void])]
     param ()
 
-    $packageProviderName = "NuGet"
-    $kustoPackageName = "microsoft.azure.kusto.ingest"
-    $kustoPackageVersion = "11.1.0"
-    $kustoPackage = Find-Package -ProviderName $packageProviderName -Name $kustoPackageName -RequiredVersion $kustoPackageVersion -ErrorAction SilentlyContinue
-
-    if ($null -eq $kustoPackage) {
-        Install-Package -ProviderName $packageProviderName -Name $kustoPackageName -RequiredVersion $kustoPackageVersion -Scope CurrentUser -Force
+    $kustoPackagesDirectoryName = "KustoPackages"
+    $kustoPackagesDirectory = Join-Path -Path . -ChildPath $kustoPackagesDirectoryName
+    if (Test-Path -LiteralPath $kustoPackagesDirectory) {
+        Remove-Item -LiteralPath $kustoPackagesDirectory -Recurse -Force
     }
 
+    New-Item -Path . -Name $kustoPackagesDirectoryName -ItemType Directory
+
     $kustoPackages = @(
-        @{ PackageName = "azure.core"; PackageVersion = "1.22.0"; DllName = "Azure.Core.dll" },
-        @{ PackageName = "azure.data.tables"; PackageVersion = "12.5.0"; DllName = "Azure.Data.Tables.dll" },
-        @{ PackageName = "azure.storage.blobs"; PackageVersion = "12.10.0"; DllName = "Azure.Storage.Blobs.dll" },
-        @{ PackageName = "azure.storage.common"; PackageVersion = "12.9.0"; DllName = "Azure.Storage.Common.dll" },
-        @{ PackageName = "azure.storage.queues"; PackageVersion = "12.8.0"; DllName = "Azure.Storage.Queues.dll" },
-        @{ PackageName = "microsoft.azure.kusto.cloud.platform"; PackageVersion = "11.1.0"; DllName = "Kusto.Cloud.Platform.dll" },
-        @{ PackageName = "microsoft.azure.kusto.cloud.platform.aad"; PackageVersion = "11.1.0"; DllName = "Kusto.Cloud.Platform.Aad.dll" },
-        @{ PackageName = "microsoft.azure.kusto.data"; PackageVersion = "11.1.0"; DllName = "Kusto.Data.dll" },
-        @{ PackageName = "microsoft.azure.kusto.ingest"; PackageVersion = "11.1.0"; DllName = "Kusto.Ingest.dll" },
-        @{ PackageName = "microsoft.identity.client"; PackageVersion = "4.46.0"; DllName = "Microsoft.Identity.Client.dll" },
-        @{ PackageName = "microsoft.identitymodel.abstractions"; PackageVersion = "6.18.0"; DllName = "Microsoft.IdentityModel.Abstractions.dll" },
-        @{ PackageName = "microsoft.io.recyclablememorystream"; PackageVersion = "2.2.0"; DllName = "Microsoft.IO.RecyclableMemoryStream.dll" },
-        @{ PackageName = "system.memory.data"; PackageVersion = "1.0.2"; DllName = "System.Memory.Data.dll" }
+        @{ PackageName = "Azure.Core"; PackageVersion = "1.22.0"; DllName = "Azure.Core.dll" },
+        @{ PackageName = "Azure.Data.Tables"; PackageVersion = "12.5.0"; DllName = "Azure.Data.Tables.dll" },
+        @{ PackageName = "Azure.Storage.Blobs"; PackageVersion = "12.10.0"; DllName = "Azure.Storage.Blobs.dll" },
+        @{ PackageName = "Azure.Storage.Common"; PackageVersion = "12.9.0"; DllName = "Azure.Storage.Common.dll" },
+        @{ PackageName = "Azure.Storage.Queues"; PackageVersion = "12.8.0"; DllName = "Azure.Storage.Queues.dll" },
+        @{ PackageName = "Microsoft.Azure.Kusto.Cloud.Platform"; PackageVersion = "11.1.0"; DllName = "Kusto.Cloud.Platform.dll" },
+        @{ PackageName = "Microsoft.Azure.Kusto.Cloud.Platform.Aad"; PackageVersion = "11.1.0"; DllName = "Kusto.Cloud.Platform.Aad.dll" },
+        @{ PackageName = "Microsoft.Azure.Kusto.Data"; PackageVersion = "11.1.0"; DllName = "Kusto.Data.dll" },
+        @{ PackageName = "Microsoft.Azure.Kusto.Ingest"; PackageVersion = "11.1.0"; DllName = "Kusto.Ingest.dll" },
+        @{ PackageName = "Microsoft.Identity.Client"; PackageVersion = "4.46.0"; DllName = "Microsoft.Identity.Client.dll" },
+        @{ PackageName = "Microsoft.IdentityModel.Abstractions"; PackageVersion = "6.18.0"; DllName = "Microsoft.IdentityModel.Abstractions.dll" },
+        @{ PackageName = "Microsoft.IO.RecyclableMemoryStream"; PackageVersion = "2.2.0"; DllName = "Microsoft.IO.RecyclableMemoryStream.dll" },
+        @{ PackageName = "System.Memory.Data"; PackageVersion = "1.0.2"; DllName = "System.Memory.Data.dll" }
     )
 
     $kustoPackages | ForEach-Object {
-        Add-Type -LiteralPath "$($env:USERPROFILE)\.nuget\packages\$($_['PackageName'])\$($_['PackageVersion'])\lib\netstandard2.0\$($_['DllName'])"
+        $packageName = $_["PackageName"]
+        $packageVersion = $_["PackageVersion"]
+        $packageDll = $_["DllName"]
+        Install-Package -Name $packageName -RequiredVersion $packageVersion -Source "https://www.nuget.org/api/v2" -Destination $kustoPackagesDirectory -SkipDependencies -ExcludeVersion -Force
+        Add-Type -LiteralPath (Join-Path -Path $kustoPackagesDirectory -ChildPath $packageName | Join-Path -ChildPath "lib" | Join-Path -ChildPath "netstandard2.0" | Join-Path -ChildPath $packageDll)
     }
 }
 
@@ -55,10 +58,6 @@ function Import-KustoDataFromCsv {
     [CmdletBinding()]
     [OutputType([void])]
     param (
-        [Parameter(Mandatory)]
-        [ValidateNotNullOrEmpty()]
-        [guid] $TenantId,
-
         [Parameter(Mandatory)]
         [ValidateNotNullOrEmpty()]
         [string] $ClusterName,
@@ -81,17 +80,20 @@ function Import-KustoDataFromCsv {
 
         [Parameter(Mandatory)]
         [ValidateNotNullOrEmpty()]
-        [string] $ServicePrincipalSecret
+        [string] $ServicePrincipalSecret,
+
+        [Parameter(Mandatory)]
+        [ValidateNotNullOrEmpty()]
+        [guid] $ServicePrincipalTenantId
     )
 
     $ingestUri = "https://ingest-$ClusterName.$ClusterRegion.kusto.windows.net"
-    $ingestBuilder = [Kusto.Data.KustoConnectionStringBuilder]::new($ingestUri).WithAadApplicationKeyAuthentication($ServicePrincipalId, $ServicePrincipalSecret, $TenantId.ToString())
+    $ingestBuilder = [Kusto.Data.KustoConnectionStringBuilder]::new($ingestUri).WithAadApplicationKeyAuthentication($ServicePrincipalId, $ServicePrincipalSecret, $ServicePrincipalTenantId.ToString())
     IngestDataFromCsv -IngestBuilder $ingestBuilder -DatabaseName $DatabaseName -TableName $TableName
 }
 
 function IngestDataFromCsv {
     [CmdletBinding()]
-    [OutputType([void])]
     param (
         [Parameter(Mandatory)]
         [ValidateNotNull()]
@@ -134,4 +136,4 @@ function IngestDataFromCsv {
     }
 }
 
-Initialize-KustoPackage
+InitializeKustoPackage

@@ -47,7 +47,6 @@ $excludedModules = @(
     "Az.Elastic",
     "Az.HanaOnAzure",
     "Az.HealthBot",
-    "Az.ImportExport",
     "Az.LabServices",
     "Az.Logz",
     "Az.ManagedServices",
@@ -55,7 +54,6 @@ $excludedModules = @(
     "Az.MariaDb",
     "Az.Marketplace",
     "Az.MonitoringSolutions",
-    "Az.MySql",
     "Az.Portal",
     "Az.PostgreSql",
     "Az.ProviderHub",
@@ -63,7 +61,6 @@ $excludedModules = @(
     "Az.Quota",
     "Az.ResourceGraph",
     "Az.ResourceMover",
-    "Az.SignalR",
     "Az.StreamAnalytics",
     "Az.Synapse",
     "Az.TimeSeriesInsights",
@@ -71,8 +68,7 @@ $excludedModules = @(
     "Az.WindowsIotServices"
 )
 
-if (-not (Test-Path -LiteralPath $testCoverageResultsDirectory -PathType Container))
-{
+if (-not (Test-Path -LiteralPath $testCoverageResultsDirectory -PathType Container)) {
     New-Item -Path $testCoverageRootDirectory -Name "Results" -ItemType Directory
 }
 Get-ChildItem -LiteralPath $testCoverageResultsDirectory -Filter "*.txt" | Remove-Item -Force
@@ -89,10 +85,8 @@ $AzPSReportContent = [System.Text.StringBuilder]::new()
 [void]$AzPSReportContent.AppendLine()
 
 $allModules = Get-ChildItem -LiteralPath $debugDirectory -Filter "Az.*" -Directory -Name
-foreach ($moduleName in $allModules)
-{
-    if ($moduleName -in $excludedModules)
-    {
+foreach ($moduleName in $allModules) {
+    if ($moduleName -in $excludedModules) {
         continue
     }
 
@@ -100,8 +94,7 @@ foreach ($moduleName in $allModules)
     Write-Host "##[section]Start analyzing module $moduleName" -ForegroundColor Green
 
     $moduleCsvFullPath = Join-Path -Path $testCoverageRawDirectory -ChildPath "$moduleName.csv"
-    if (-not (Test-Path $moduleCsvFullPath))
-    {
+    if (-not (Test-Path $moduleCsvFullPath)) {
         [void]$AzPSReportContent.AppendLine("  Module name: $moduleName has no test raw data found!")
         [void]$AzPSReportContent.AppendLine()
         continue
@@ -113,8 +106,7 @@ foreach ($moduleName in $allModules)
     [void]$AzPSModuleReportContent.AppendLine("Test coverage report for module $moduleName :")
     [void]$AzPSModuleReportContent.AppendLine()
 
-    if ($moduleName -ne $accountModuleName)
-    {
+    if ($moduleName -ne $accountModuleName) {
         $moduleFullPath = Join-Path -Path $debugDirectory -ChildPath $moduleName | Join-Path -ChildPath "$moduleName.psd1"
         Import-Module $moduleFullPath
     }
@@ -143,8 +135,7 @@ foreach ($moduleName in $allModules)
 
         $cmdletParams = $cmdlet.Parameters
         $cmdletParams.Keys | ForEach-Object {
-            if ($_ -notin $psCommonParameters)
-            {
+            if ($_ -notin $psCommonParameters) {
                 $totalParametersCount += $cmdletParams[$_].ParameterSets.Count
             }
         }
@@ -179,7 +170,7 @@ foreach ($moduleName in $allModules)
         $totalExecutedParametersCount += ($executedParams | Where-Object { $_ -and $_ -notin $psCommonParameters } | Select-Object -Unique).Count
     }
 
-    $AzPSModuleReportContent.ToString() | Out-File -LiteralPath ([System.IO.Path]::Combine($testCoverageResultsDirectory, "$moduleName.txt")) -NoNewLine
+    $AzPSModuleReportContent.ToString() | Out-File -LiteralPath ([System.IO.Path]::Combine($testCoverageResultsDirectory, "$moduleName.txt")) -NoNewline
 
     [void]$AzPSReportContent.AppendLine("  -->  By cmdlet: $(($totalExecutedCmdletsCount / $totalCmdletsCount).ToString("P0"))")
     [void]$AzPSReportContent.AppendLine("  -->  By parameter set: $(($totalExecutedParameterSetsCount / $totalParameterSetsCount).ToString("P0"))")
@@ -192,4 +183,4 @@ foreach ($moduleName in $allModules)
 }
 
 [void]$AzPSReportContent.AppendLine("Total Azure PowerShell cmdlets coverage: $(($overallExecutedCmdletsCount / $overallCmdletsCount).ToString("P0"))")
-$AzPSReportContent.ToString() | Out-File -LiteralPath ([System.IO.Path]::Combine($testCoverageResultsDirectory, "Azure PowerShell Test Coverage Report.txt")) -NoNewLine
+$AzPSReportContent.ToString() | Out-File -LiteralPath ([System.IO.Path]::Combine($testCoverageResultsDirectory, "Azure PowerShell Test Coverage Report.txt")) -NoNewline

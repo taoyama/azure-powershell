@@ -5,11 +5,11 @@ param (
 
     [Parameter(Mandatory, ParameterSetName = "ByScriptFile")]
     [ValidateNotNullOrEmpty()]
-    [string] $ScriptPath,
+    [string] $ScriptFile,
 
     [Parameter(Mandatory, ParameterSetName = "ByScriptBlock")]
     [ValidateNotNullOrEmpty()]
-    [string] $Script
+    [string] $ScriptBlock
 )
 
 if ($UseWindowsPowerShell) {
@@ -21,9 +21,9 @@ else {
 
 switch ($PSCmdlet.ParameterSetName) {
     "ByScriptFile" {
-        Invoke-Expression "$process -NoLogo -NoProfile -NonInteractive -File $ScriptPath"
+        Invoke-Expression "$process -NoLogo -NoProfile -NonInteractive -File $ScriptFile"
     }
     "ByScriptBlock" {
-        Invoke-Expression "$process -NoLogo -NoProfile -NonInteractive -Command $Script"
+        Invoke-Expression "$process -NoLogo -NoProfile -NonInteractive -Command $ScriptBlock"
     }
 }

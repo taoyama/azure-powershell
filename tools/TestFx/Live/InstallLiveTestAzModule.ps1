@@ -1,12 +1,9 @@
-[CmdletBinding()]
 param (
-    [Parameter(Mandatory, Position = 0)]
-    [ValidateSet("PSGallery", "LocalRepo", IgnoreCase = $false, ErrorMessage = "Invalid value for parameter Source.")]
+    [Parameter(Mandatory)]
+    [ValidateSet("PSGallery", "LocalRepo", IgnoreCase = $false)]
     [string] $Source,
 
-    [Parameter(Mandatory, Position = 1)]
-    [ValidateNotNullOrEmpty]
-    [ValidateScript({ Test-Path -LiteralPath $_ -PathType Container })]
+    [Parameter()]
     [string] $RepoLocation
 )
 
