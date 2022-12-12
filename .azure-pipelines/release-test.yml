@@ -26,7 +26,7 @@ parameters:
 - name: netCoreVersion
   displayName: .NET Version
   type: string
-  default: 6.0.x
+  default: 7.0.x
 
 variables:
   winAgentPoolName: pool-windows-2019
